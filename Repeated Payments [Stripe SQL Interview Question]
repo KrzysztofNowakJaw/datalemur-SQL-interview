@@ -1,1 +1,25 @@
-#
+#Link to challange
+#https://datalemur.com/questions/repeated-payments
+
+WITH BASE AS (
+    SELECT 
+        merchant_id,
+        transaction_timestamp,
+        credit_card_id,
+        amount,
+        ROW_NUMBER() OVER (PARTITION BY merchant_id, credit_card_id, amount ORDER BY merchant_id, credit_card_id, transaction_timestamp, credit_card_id, amount) AS row_num,
+        LAG(transaction_timestamp) OVER (PARTITION BY merchant_id, credit_card_id, amount ORDER BY merchant_id, credit_card_id, amount, transaction_timestamp) - transaction_timestamp AS Diff
+    FROM 
+        transactions
+    ORDER BY 
+        merchant_id, credit_card_id, amount, transaction_timestamp
+)
+
+SELECT 
+    COUNT(*) AS payment_count
+FROM 
+    BASE
+WHERE 
+    (EXTRACT(EPOCH FROM (Diff)) / 60) * -1 <= 10;
+AND  AND row_num > 1
+
