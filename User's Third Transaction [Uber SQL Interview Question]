@@ -1,0 +1,24 @@
+#Link to challange
+#https://datalemur.com/questions/sql-third-transaction
+
+-- Selecting user_id, spend, and transaction_date columns
+SELECT
+    user_id,
+    spend,
+    transaction_date
+FROM (
+    -- Subquery to calculate the row number partitioned by user_id and ordered by user_id and transaction_date
+    SELECT 
+        user_id,
+        spend,
+        transaction_date,
+        ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY user_id, transaction_date) AS R
+    FROM 
+        transactions
+    -- Ordering the result set by user_id and transaction_date
+    ORDER BY 
+        user_id, transaction_date
+) AS P 
+-- Filtering only rows where the row number is 3
+WHERE 
+    R = 3;
