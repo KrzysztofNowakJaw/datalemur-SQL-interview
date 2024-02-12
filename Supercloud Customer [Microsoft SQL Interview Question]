@@ -1,1 +1,32 @@
-#
+#Link to challange
+#https://datalemur.com/questions/supercloud-customer
+
+-- Common Table Expression (CTE) to group customer contracts by customer_id and product_category
+WITH Grouped AS (
+    SELECT 
+        CS.customer_id,
+        product_category
+    FROM 
+        customer_contracts AS CS 
+        JOIN products AS P ON P.product_id = CS.product_id
+    GROUP BY 
+        CS.customer_id, product_category
+    ORDER BY 
+        customer_id
+)
+
+-- Final SELECT statement to select customer_id based on the condition
+SELECT 
+    customer_id
+FROM 
+    Grouped
+GROUP BY 
+    customer_id
+HAVING 
+    COUNT(product_category) = (
+        -- Subquery to calculate the total number of distinct product categories
+        SELECT 
+            COUNT(DISTINCT product_category) 
+        FROM 
+            products
+    );
