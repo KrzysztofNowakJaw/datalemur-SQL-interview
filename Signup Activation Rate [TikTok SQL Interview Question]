@@ -1,0 +1,15 @@
+# Link to challange
+# https://datalemur.com/questions/signup-confirmation-rate
+
+-- Outer SELECT statement to calculate the ratio of confirmed signups to non-null signups
+SELECT 
+    ROUND(C / NC, 2) AS ratio_confirmed_to_non_null
+FROM (
+    -- Inner SELECT statement to count confirmed signups (C) and non-null signups (NC)
+    SELECT 
+        COUNT(CASE WHEN signup_action = 'Confirmed' THEN 1 END)::NUMERIC AS C,
+        COUNT(CASE WHEN signup_action IS NOT NULL THEN 1 END)::NUMERIC AS NC
+    FROM 
+        emails
+        LEFT JOIN texts ON emails.email_id = texts.email_id
+) AS B;
