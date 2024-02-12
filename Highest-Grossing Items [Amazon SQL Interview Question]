@@ -1,0 +1,37 @@
+#Link to challange
+#https://datalemur.com/questions/sql-highest-grossing
+
+-- Common Table Expression (CTE) to calculate total spend for each category and product in the year 2022
+WITH Calc AS (
+    SELECT 
+        category,
+        product,
+        SUM(spend) AS total_spend
+    FROM 
+        product_spend
+    WHERE 
+        date_part('year', transaction_date) = 2022
+    GROUP BY 
+        category, product
+),
+
+-- CTE to assign ranks to products within each category based on total spend
+Ranking AS (
+    SELECT 
+        *,
+        RANK() OVER (PARTITION BY category ORDER BY total_spend DESC) AS rank
+    FROM 
+        Calc
+)
+
+-- Final SELECT statement to retrieve category, product, and total spend for top 2 products in each category
+SELECT 
+    category,
+    product,
+    total_spend
+FROM 
+    Ranking 
+WHERE  
+    rank < 3
+ORDER BY 
+    category, rank;
