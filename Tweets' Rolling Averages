@@ -1,0 +1,21 @@
+#Link to challange
+#https://datalemur.com/questions/rolling-average-tweets
+
+-- Selecting columns and calculating the rolling average for each user
+SELECT 
+    user_id,
+    tweet_date,
+    -- Calculating the rolling average for each user over a window of 3 days
+    ROUND(
+        AVG(tweet_count) 
+        OVER (
+            PARTITION BY user_id 
+            ORDER BY tweet_date 
+            ROWS BETWEEN 2 PRECEDING AND CURRENT ROW
+        ), 2
+    ) AS rolling_avg_3d
+FROM 
+    tweets
+-- Sorting the results by user_id and tweet_date
+ORDER BY 
+    user_id, tweet_date;
