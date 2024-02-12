@@ -1,0 +1,48 @@
+#Link to challange
+#https://datalemur.com/questions/time-spent-snaps
+
+-- Common Table Expression (CTE) to calculate aggregated values for each user and activity type within age buckets
+WITH Base AS (
+    SELECT 
+        A.user_id,
+        activity_id,
+        activity_type,
+        time_spent,
+        age_bucket,
+        SUM(time_spent) OVER (PARTITION BY age_bucket) AS Bucket_sum,
+        -- Calculating the sum of time_spent for 'send' activity type within each age bucket
+        CASE WHEN activity_type = 'send' THEN SUM(time_spent) OVER (PARTITION BY age_bucket, activity_type) END AS SendSum,
+        -- Calculating the sum of time_spent for 'open' activity type within each age bucket
+        CASE WHEN activity_type = 'open' THEN SUM(time_spent) OVER (PARTITION BY age_bucket, activity_type) END AS OpenSum
+    FROM 
+        activities AS A
+    JOIN 
+        age_breakdown AS AB ON A.user_id = AB.user_id
+    WHERE 
+        activity_type != 'chat'
+),
+
+-- CTE to select distinct values and calculate percentages
+PcTable AS (
+    SELECT 
+        DISTINCT
+        age_bucket,
+        OpenSum,
+        Bucket_sum,
+        -- Calculating the percentage of 'send' activity type within each age bucket
+        CASE WHEN SendSum IS NOT NULL THEN SendSum / Bucket_sum ELSE 0 END AS send_perc,
+        -- Calculating the percentage of 'open' activity type within each age bucket
+        CASE WHEN OpenSum IS NOT NULL THEN OpenSum / Bucket_sum ELSE 0 END AS open_perc
+    FROM 
+        Base
+)
+
+-- Final SELECT statement to calculate the rounded percentages and group by age_bucket
+SELECT 
+    age_bucket,
+    ROUND(SUM(send_perc) * 100, 2) AS send_perc,
+    ROUND(SUM(open_perc) * 100, 2) AS open_perc
+FROM 
+    PcTable
+GROUP BY 
+    age_bucket;
